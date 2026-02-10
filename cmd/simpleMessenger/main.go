@@ -14,12 +14,6 @@ func main() {
 
 	database := db.InitDB(dsn)
 
-	err := database.AutoMigrate(&model.User{}, &model.Chat{}, &model.Message{}, &model.ChatParticipants{})
-	if err != nil {
-		log.Fatalf("failed to migrate database: %v", err)
-	}
-	log.Println("Database migrated successfully")
-
 	//userRepo := postgres.NewUserRepository(database)
 	//chatRepo := postgres.NewChatRepository(database)
 	//messageRepo := postgres.NewMessageRepository(database)

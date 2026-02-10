@@ -35,6 +35,18 @@ func (r *userRepository) GetByID(id uint) (*model.User, error) {
 	return user, nil
 }
 
+func (r *userRepository) GetByLogin(login string) (*model.User, error) {
+	user := &model.User{}
+	err := r.db.Where("login = ?", login).First(user).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, repoInterfaces.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("get user by login: %w", err)
+	}
+	return user, nil
+}
+
 func (r *userRepository) Update(user *model.User) error {
 	result := r.db.Model(model.User{}).Updates(user)
 	if result.Error != nil {
