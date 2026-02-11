@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"simpleTodoList/internal/model"
@@ -27,7 +28,7 @@ func (r *userRepository) GetByID(id uint) (*model.User, error) {
 	user := &model.User{}
 	err := r.db.Where("id = ?", id).First(user).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repoInterfaces.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("get user by id: %w", err)
@@ -39,7 +40,7 @@ func (r *userRepository) GetByLogin(login string) (*model.User, error) {
 	user := &model.User{}
 	err := r.db.Where("login = ?", login).First(user).Error
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, repoInterfaces.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("get user by login: %w", err)
@@ -61,7 +62,7 @@ func (r *userRepository) Update(user *model.User) error {
 func (r *userRepository) Delete(id uint) error {
 	result := r.db.Delete(model.User{}, id)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return repoInterfaces.ErrUserNotFound
 		}
 		return fmt.Errorf("delete user: %w", result.Error)

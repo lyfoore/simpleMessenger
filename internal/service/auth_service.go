@@ -26,7 +26,7 @@ func NewAuthService(userRepo interfaces.UserRepo, tokenService TokenService) *Au
 }
 
 func (s *AuthService) Register(user *model.User) error {
-	existing, _ := s.userRepo.GetByID(user.ID)
+	existing, _ := s.userRepo.GetByLogin(user.Login)
 	if existing != nil {
 		return ErrUserAlreadyExists
 	}

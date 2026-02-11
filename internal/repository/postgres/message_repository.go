@@ -1,0 +1,71 @@
+package postgres
+
+import (
+	"errors"
+	"fmt"
+	"gorm.io/gorm"
+	"simpleTodoList/internal/model"
+	repoInterfaces "simpleTodoList/internal/repository/interfaces"
+)
+
+type messageRepository struct {
+	db *gorm.DB
+}
+
+func NewMessageRepository(db *gorm.DB) repoInterfaces.MessageRepo {
+	return &messageRepository{db: db}
+}
+
+func (r *messageRepository) Create(message *model.Message) error {
+	result := r.db.Create(message)
+	if result.Error != nil {
+		return fmt.Errorf("create message: %w", result.Error)
+	}
+	return nil
+}
+
+func (r *messageRepository) GetByID(id uint) (*model.Message, error) {
+	message := &model.Message{}
+	err := r.db.Where("id = ?", id).First(message).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repoInterfaces.ErrMessageNotFound
+		}
+		return nil, fmt.Errorf("get message by id: %w", err)
+	}
+	return message, nil
+}
+
+func (r *messageRepository) GetByLogin(login string) (*model.Message, error) {
+	message := &model.Message{}
+	err := r.db.Where("login = ?", login).First(message).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repoInterfaces.ErrMessageNotFound
+		}
+		return nil, fmt.Errorf("get message by login: %w", err)
+	}
+	return message, nil
+}
+
+func (r *messageRepository) Update(message *model.Message) error {
+	result := r.db.Model(model.Message{}).Updates(message)
+	if result.Error != nil {
+		if result.RowsAffected == 0 {
+			return repoInterfaces.ErrMessageNotFound
+		}
+		return fmt.Errorf("update message: %w", result.Error)
+	}
+	return nil
+}
+
+func (r *messageRepository) Delete(id uint) error {
+	result := r.db.Delete(model.Message{}, id)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return repoInterfaces.ErrMessageNotFound
+		}
+		return fmt.Errorf("delete message: %w", result.Error)
+	}
+	return nil
+}
