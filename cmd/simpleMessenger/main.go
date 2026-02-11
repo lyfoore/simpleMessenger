@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"simpleTodoList/internal/db"
-	"simpleTodoList/internal/model"
-	"simpleTodoList/internal/router"
+	"simpleTodoList/internal/repository/postgres"
+	"simpleTodoList/internal/service"
+	"simpleTodoList/internal/transport/http"
 )
 
 func main() {
@@ -14,13 +14,20 @@ func main() {
 
 	database := db.InitDB(dsn)
 
-	//userRepo := postgres.NewUserRepository(database)
+	userRepo := postgres.NewUserRepository(database)
 	//chatRepo := postgres.NewChatRepository(database)
 	//messageRepo := postgres.NewMessageRepository(database)
 	//chatParticipantsRepo := postgres.NewChatParticipantsRepository(database)
 
-	r := router.NewRouter()
-	r.SetupRouter()
+	secret := getEnv("JWT_SECRET_KEY", "")
+
+	tokenService := service.NewJwtService(secret)
+	authService := service.NewAuthService(userRepo, tokenService)
+
+	authHandler := http.NewAuthHandler(authService)
+
+	r := http.NewRouter()
+	r.SetupRouter(authHandler, tokenService)
 	r.Run()
 }
 
