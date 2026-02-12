@@ -69,3 +69,15 @@ func (r *messageRepository) Delete(id uint) error {
 	}
 	return nil
 }
+
+func (r *messageRepository) DeleteAllMessagesInChat(chatID uint) error {
+	err := r.db.Delete(&model.Message{}, "chat_id = ?", chatID).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return repoInterfaces.ErrMessageNotFound
+		}
+		return fmt.Errorf("delete all messages in chat: %w", err)
+	}
+	return nil
+}

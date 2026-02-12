@@ -14,4 +14,5 @@ type MessageRepo interface {
 	GetByID(id uint) (*model.Message, error)
 	Update(message *model.Message) error
 	Delete(id uint) error
+	DeleteAllMessagesInChat(chatID uint) error
 }
