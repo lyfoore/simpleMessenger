@@ -1,5 +1,5 @@
 services:
-  simple_todo_list:
+  simple_messenger:
     build:
       dockerfile: ./build/package/Dockerfile
     depends_on:

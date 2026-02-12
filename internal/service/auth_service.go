@@ -2,8 +2,8 @@ package service
 
 import (
 	"errors"
-	"simpleTodoList/internal/model"
-	"simpleTodoList/internal/repository/interfaces"
+	"simpleMessenger/internal/model"
+	"simpleMessenger/internal/repository/interfaces"
 )
 
 var (

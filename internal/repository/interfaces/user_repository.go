@@ -2,7 +2,7 @@ package interfaces
 
 import (
 	"errors"
-	"simpleTodoList/internal/model"
+	"simpleMessenger/internal/model"
 )
 
 var (

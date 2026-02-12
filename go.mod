@@ -1,4 +1,4 @@
-module simpleTodoList
+module simpleMessenger
 
 go 1.23.0
 

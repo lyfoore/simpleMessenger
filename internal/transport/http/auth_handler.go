@@ -3,8 +3,8 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"simpleTodoList/internal/model"
-	"simpleTodoList/internal/service"
+	"simpleMessenger/internal/model"
+	"simpleMessenger/internal/service"
 )
 
 type LoginRequest struct {

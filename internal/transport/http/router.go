@@ -3,7 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"simpleTodoList/internal/service"
+	"simpleMessenger/internal/service"
 )
 
 type Router struct {

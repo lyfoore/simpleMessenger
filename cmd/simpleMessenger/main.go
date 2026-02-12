@@ -3,10 +3,10 @@ package main
 import (
 	"fmt"
 	"os"
-	"simpleTodoList/internal/db"
-	"simpleTodoList/internal/repository/postgres"
-	"simpleTodoList/internal/service"
-	"simpleTodoList/internal/transport/http"
+	"simpleMessenger/internal/db"
+	"simpleMessenger/internal/repository/postgres"
+	"simpleMessenger/internal/service"
+	"simpleMessenger/internal/transport/http"
 )
 
 func main() {

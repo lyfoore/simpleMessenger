@@ -3,8 +3,8 @@ package postgres
 import (
 	"fmt"
 	"gorm.io/gorm"
-	"simpleTodoList/internal/model"
-	repoInterfaces "simpleTodoList/internal/repository/interfaces"
+	"simpleMessenger/internal/model"
+	repoInterfaces "simpleMessenger/internal/repository/interfaces"
 )
 
 type chatRepository struct {

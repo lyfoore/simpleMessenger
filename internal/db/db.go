@@ -4,7 +4,7 @@ import (
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
-	"simpleTodoList/internal/model"
+	"simpleMessenger/internal/model"
 )
 
 func InitDB(dsn string) *gorm.DB {
