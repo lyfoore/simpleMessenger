@@ -16,19 +16,18 @@ func NewMessageService(messageRepo repoInterfaces.MessageRepo, chatParticipantsR
 }
 
 type SendMessageRequest struct {
-	text   string
-	userID uint
-	chatID uint
+	Text   string `json:"text"`
+	UserID uint   `json:"user_id"`
+	ChatID uint   `json:"chat_id"`
 }
 
 type DeleteMessageRequest struct {
-	text   string
-	userID uint
-	chatID uint
+	UserID    uint `json:"user_id"`
+	MessageID uint `json:"message_id"`
 }
 
 func (s *MessageService) SendMessage(req *SendMessageRequest) error {
-	isUserInChat, err := s.chatParticipantsRepo.IsUserInChat(req.userID, req.chatID)
+	isUserInChat, err := s.chatParticipantsRepo.IsUserInChat(req.UserID, req.ChatID)
 	if err != nil {
 		return fmt.Errorf("cant check if user is in chat: %v", err)
 	}
@@ -38,9 +37,9 @@ func (s *MessageService) SendMessage(req *SendMessageRequest) error {
 	}
 
 	msg := &model.Message{
-		Text:   req.text,
-		ChatID: req.chatID,
-		UserID: req.userID,
+		Text:   req.Text,
+		ChatID: req.ChatID,
+		UserID: req.UserID,
 	}
 
 	err = s.messageRepo.Create(msg)
