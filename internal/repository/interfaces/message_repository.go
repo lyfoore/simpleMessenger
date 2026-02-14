@@ -12,6 +12,7 @@ var (
 type MessageRepo interface {
 	Create(message *model.Message) error
 	GetByID(id uint) (*model.Message, error)
+	GetMessagesByChatID(chatID uint, limit int) ([]*model.Message, error)
 	Update(message *model.Message) error
 	Delete(id uint) error
 	DeleteAllMessagesInChat(chatID uint) error

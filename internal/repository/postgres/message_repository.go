@@ -36,16 +36,23 @@ func (r *messageRepository) GetByID(id uint) (*model.Message, error) {
 	return message, nil
 }
 
-func (r *messageRepository) GetByLogin(login string) (*model.Message, error) {
-	message := &model.Message{}
-	err := r.db.Where("login = ?", login).First(message).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, repoInterfaces.ErrMessageNotFound
-		}
-		return nil, fmt.Errorf("get message by login: %w", err)
+func (r *messageRepository) GetMessagesByChatID(chatID uint, limit int) ([]*model.Message, error) {
+	var messages []*model.Message
+
+	query := r.db.Model(&model.Message{}).
+		Where("chat_id = ?", chatID).
+		Order("created_at DESC")
+
+	if limit > 0 {
+		query = query.Limit(limit)
 	}
-	return message, nil
+
+	err := query.Find(&messages).Error
+	if err != nil {
+		return nil, fmt.Errorf("get messages in chat: %w", err)
+	}
+
+	return messages, nil
 }
 
 func (r *messageRepository) Update(message *model.Message) error {

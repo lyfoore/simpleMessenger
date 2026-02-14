@@ -82,6 +82,26 @@ func (s *MessageService) SendMessage(req *SendMessageRequest) error {
 	return nil
 }
 
+func (s *MessageService) GetMessages(chatID uint, limit int, userID uint) ([]*model.Message, error) {
+	isUserInChat, err := s.chatParticipantsRepo.IsUserInChat(userID, chatID)
+
+	if err != nil {
+		return nil, fmt.Errorf("cant check if user is in chat: %w", err)
+	}
+
+	if !isUserInChat {
+		return nil, fmt.Errorf("cant get messages. user is not in chat")
+	}
+
+	messages, err := s.messageRepo.GetMessagesByChatID(chatID, limit)
+
+	if err != nil {
+		return nil, fmt.Errorf("cant get chat messages in chat: %w", err)
+	}
+
+	return messages, nil
+}
+
 func (s *MessageService) DeleteMessage(messageID, userID uint) error {
 	msg, err := s.messageRepo.GetByID(messageID)
 	if err != nil {
