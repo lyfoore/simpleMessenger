@@ -20,7 +20,7 @@ func NewChatService(chatRepo repoInterfaces.ChatRepo, chatParticipantsRepo repoI
 func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
 	isChatExists, err := s.chatParticipantsRepo.IsChatExists(firstUserID, secondUserID)
 	if err != nil {
-		return fmt.Errorf("cant check if the chat is already exists: %v", err)
+		return fmt.Errorf("cant check if the chat is already exists: %w", err)
 	}
 
 	if isChatExists {
@@ -33,7 +33,7 @@ func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
 
 	err = s.chatRepo.Create(chat)
 	if err != nil {
-		return fmt.Errorf("cant create chat: %v", err)
+		return fmt.Errorf("cant create chat: %w", err)
 	}
 
 	chatParticipantsFirst := &model.ChatParticipants{
@@ -49,23 +49,31 @@ func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
 	err = s.chatParticipantsRepo.Create(chatParticipantsFirst)
 	if err != nil {
 		_ = s.chatRepo.Delete(chat.ID)
-		return fmt.Errorf("cant create chat participants: %v", err)
+		return fmt.Errorf("cant create chat participants: %w", err)
 	}
 
 	err = s.chatParticipantsRepo.Create(chatParticipantsSecond)
 	if err != nil {
 		_ = s.chatRepo.Delete(chat.ID)
 		_ = s.chatParticipantsRepo.Delete(chatParticipantsFirst.ID)
-		return fmt.Errorf("cant create chat participants: %v", err)
+		return fmt.Errorf("cant create chat participants: %w", err)
 	}
 
 	return nil
 }
 
+func (s *ChatService) GetChats(userID uint, limit int) ([]*model.Chat, error) {
+	chats, err := s.chatRepo.GetChats(userID, limit)
+	if err != nil {
+		return nil, fmt.Errorf("cant get chats by userID: %w", err)
+	}
+	return chats, nil
+}
+
 func (s *ChatService) DeleteChat(chatID, userID uint) error {
 	isUserInChat, err := s.chatParticipantsRepo.IsUserInChat(userID, chatID)
 	if err != nil {
-		return fmt.Errorf("cant check if user is in chat: %v", err)
+		return fmt.Errorf("cant check if user is in chat: %w", err)
 	}
 
 	if !isUserInChat {
@@ -74,17 +82,17 @@ func (s *ChatService) DeleteChat(chatID, userID uint) error {
 
 	err = s.messageRepo.DeleteAllMessagesInChat(chatID)
 	if err != nil {
-		return fmt.Errorf("cant delete all messages in chat: %v", err)
+		return fmt.Errorf("cant delete all messages in chat: %w", err)
 	}
 
 	err = s.chatParticipantsRepo.DeleteChat(chatID)
 	if err != nil {
-		return fmt.Errorf("cant delete chat from chat participants: %v", err)
+		return fmt.Errorf("cant delete chat from chat participants: %w", err)
 	}
 
 	err = s.chatRepo.Delete(chatID)
 	if err != nil {
-		return fmt.Errorf("cant delete chat: %v", err)
+		return fmt.Errorf("cant delete chat: %w", err)
 	}
 
 	return nil

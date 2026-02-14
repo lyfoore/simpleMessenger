@@ -2,7 +2,10 @@ package http
 
 import (
 	"github.com/gin-gonic/gin"
+	"log"
+	"net/http"
 	"simpleMessenger/internal/service"
+	"strconv"
 )
 
 type ChatHandler struct {
@@ -35,6 +38,35 @@ func (h *ChatHandler) CreateChat(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"message": "Chat created successfully"})
+}
+
+func (h *ChatHandler) GetChats(c *gin.Context) {
+	value, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
+		return
+	}
+	userID, ok := value.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+		return
+	}
+
+	limitStr := c.DefaultQuery("limit", "20")
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit parameter"})
+		return
+	}
+
+	chats, err := h.chatService.GetChats(userID, limit)
+	if err != nil {
+		log.Printf("failed to get chats for user %d: %v", userID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve chats"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"chats": chats})
 }
 
 func (h *ChatHandler) DeleteChat(c *gin.Context) {

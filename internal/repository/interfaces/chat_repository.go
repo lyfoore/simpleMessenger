@@ -13,6 +13,7 @@ var (
 type ChatRepo interface {
 	Create(chat *model.Chat) error
 	GetByID(id uint) (*model.Chat, error)
+	GetChats(userID uint, limit int) ([]*model.Chat, error)
 	Update(chat *model.Chat) error
 	Delete(id uint) error
 }

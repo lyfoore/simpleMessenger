@@ -30,7 +30,7 @@ func (r *Router) SetupRouter(
 	protected := r.engine.Group("/api")
 	protected.Use(AuthMiddleware(tokenService))
 	{
-		//protected.GET("/chats", chatHandler.GetChats) // query: limit
+		protected.GET("/chats", chatHandler.GetChats) // query: limit
 		protected.POST("/chats", chatHandler.CreateChat)
 		protected.DELETE("/chats/:chatId", chatHandler.DeleteChat)
 
