@@ -11,8 +11,8 @@ var (
 )
 
 type ChatRepo interface {
-	Create(user *model.Chat) error
+	Create(chat *model.Chat) error
 	GetByID(id uint) (*model.Chat, error)
-	Update(user *model.Chat) error
+	Update(chat *model.Chat) error
 	Delete(id uint) error
 }

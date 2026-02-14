@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"simpleMessenger/internal/model"
 	repoInterfaces "simpleMessenger/internal/repository/interfaces"
+	"time"
 )
 
 type ChatService struct {
@@ -26,7 +27,9 @@ func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
 		return fmt.Errorf("chat is already created")
 	}
 
-	chat := &model.Chat{}
+	chat := &model.Chat{
+		LastMessageAt: time.Now(),
+	}
 
 	err = s.chatRepo.Create(chat)
 	if err != nil {
