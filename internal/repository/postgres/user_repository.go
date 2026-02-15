@@ -49,7 +49,7 @@ func (r *userRepository) GetByLogin(login string) (*model.User, error) {
 }
 
 func (r *userRepository) Update(user *model.User) error {
-	result := r.db.Model(model.User{}).Updates(user)
+	result := r.db.Model(&model.User{}).Updates(user)
 	if result.Error != nil {
 		if result.RowsAffected == 0 {
 			return repoInterfaces.ErrUserNotFound
@@ -60,7 +60,7 @@ func (r *userRepository) Update(user *model.User) error {
 }
 
 func (r *userRepository) Delete(id uint) error {
-	result := r.db.Delete(model.User{}, id)
+	result := r.db.Delete(&model.User{}, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return repoInterfaces.ErrUserNotFound

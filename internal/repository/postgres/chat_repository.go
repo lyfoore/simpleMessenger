@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	"gorm.io/gorm"
 	"simpleMessenger/internal/model"
@@ -55,20 +56,20 @@ func (r *chatRepository) GetChats(userID uint, limit int) ([]*model.Chat, error)
 }
 
 func (r *chatRepository) Update(chat *model.Chat) error {
-	result := r.db.Model(model.Chat{}).Updates(chat)
+	result := r.db.Model(&model.Chat{}).Where("id = ?", chat.ID).Updates(chat)
 	if result.Error != nil {
-		if result.RowsAffected == 0 {
-			return repoInterfaces.ErrChatNotFound
-		}
 		return fmt.Errorf("update chat: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return repoInterfaces.ErrChatNotFound
 	}
 	return nil
 }
 
 func (r *chatRepository) Delete(id uint) error {
-	result := r.db.Delete(model.Chat{}, id)
+	result := r.db.Delete(&model.Chat{}, id)
 	if result.Error != nil {
-		if result.Error == gorm.ErrRecordNotFound {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return repoInterfaces.ErrChatNotFound
 		}
 		return fmt.Errorf("delete chat: %w", result.Error)

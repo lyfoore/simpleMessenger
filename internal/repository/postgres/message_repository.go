@@ -56,7 +56,7 @@ func (r *messageRepository) GetMessagesByChatID(chatID uint, limit int) ([]*mode
 }
 
 func (r *messageRepository) Update(message *model.Message) error {
-	result := r.db.Model(model.Message{}).Updates(message)
+	result := r.db.Model(&model.Message{}).Updates(message)
 	if result.Error != nil {
 		if result.RowsAffected == 0 {
 			return repoInterfaces.ErrMessageNotFound
@@ -67,7 +67,7 @@ func (r *messageRepository) Update(message *model.Message) error {
 }
 
 func (r *messageRepository) Delete(id uint) error {
-	result := r.db.Delete(model.Message{}, id)
+	result := r.db.Delete(&model.Message{}, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return repoInterfaces.ErrMessageNotFound

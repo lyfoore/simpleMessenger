@@ -63,7 +63,7 @@ func (c *chatParticipantsRepository) IsUserInChat(userID, chatID uint) (bool, er
 }
 
 func (c *chatParticipantsRepository) Update(participants *model.ChatParticipants) error {
-	result := c.db.Model(model.ChatParticipants{}).Updates(participants)
+	result := c.db.Model(&model.ChatParticipants{}).Updates(participants)
 	if result.Error != nil {
 		if result.RowsAffected == 0 {
 			return repoInterfaces.ErrChatParticipantsNotFound
@@ -74,7 +74,7 @@ func (c *chatParticipantsRepository) Update(participants *model.ChatParticipants
 }
 
 func (c *chatParticipantsRepository) Delete(id uint) error {
-	result := c.db.Delete(model.ChatParticipants{}, id)
+	result := c.db.Delete(&model.ChatParticipants{}, id)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return repoInterfaces.ErrChatParticipantsNotFound
