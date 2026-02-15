@@ -15,19 +15,23 @@ func main() {
 	database := db.InitDB(dsn)
 
 	userRepo := postgres.NewUserRepository(database)
-	//chatRepo := postgres.NewChatRepository(database)
-	//messageRepo := postgres.NewMessageRepository(database)
-	//chatParticipantsRepo := postgres.NewChatParticipantsRepository(database)
+	chatRepo := postgres.NewChatRepository(database)
+	messageRepo := postgres.NewMessageRepository(database)
+	chatParticipantsRepo := postgres.NewChatParticipantsRepository(database)
 
 	secret := getEnv("JWT_SECRET_KEY", "")
 
 	tokenService := service.NewJwtService(secret)
 	authService := service.NewAuthService(userRepo, tokenService)
+	chatService := service.NewChatService(chatRepo, chatParticipantsRepo, messageRepo)
+	messageService := service.NewMessageService(messageRepo, chatRepo, chatParticipantsRepo)
 
 	authHandler := http.NewAuthHandler(authService)
+	chatHandler := http.NewChatHandler(chatService)
+	messageHandler := http.NewMessageHandler(messageService)
 
 	r := http.NewRouter()
-	r.SetupRouter(authHandler, tokenService)
+	r.SetupRouter(authHandler, chatHandler, messageHandler, tokenService)
 	r.Run()
 }
 
