@@ -22,53 +22,84 @@ func NewMessageHandler(messageService *service.MessageService) *MessageHandler {
 }
 
 func (h *MessageHandler) SendMessage(c *gin.Context) {
-	var req service.SendMessageRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	err := h.messageService.SendMessage(&req)
+	userID, err := GetUserIdFromContext(c)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		log.Printf("failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get a userID"})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Message sent successfully"})
+	chatIDStr := c.Param("chatId")
+	chatID, err := strconv.ParseUint(chatIDStr, 10, 64)
+
+	if err != nil {
+		log.Printf("failed to parse chat id param: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid chatID"})
+		return
+	}
+
+	var req struct {
+		Text string `json:"text"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("failed to unmarshal json with text")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to unmarshal text message"})
+		return
+	}
+
+	sendMessageRequest := &service.SendMessageRequest{
+		Text:   req.Text,
+		UserID: userID,
+		ChatID: uint(chatID),
+	}
+
+	err = h.messageService.SendMessage(sendMessageRequest)
+
+	if err != nil {
+		log.Printf("failed to send message: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send message"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Message sent"})
 }
 
 func (h *MessageHandler) GetMessages(c *gin.Context) {
-	value, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-	userID, ok := value.(uint)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+	userID, err := GetUserIdFromContext(c)
+
+	if err != nil {
+		log.Printf("failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get a userID"})
 		return
 	}
 
-	var req GetMessagesRequest
+	chatIDStr := c.Param("chatId")
+	chatID, err := strconv.ParseUint(chatIDStr, 10, 64)
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	if err != nil {
+		log.Printf("failed to parse chat id param: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid chatID"})
 		return
 	}
 
 	limitStr := c.DefaultQuery("limit", "20")
 	limit, err := strconv.Atoi(limitStr)
 	if err != nil || limit <= 0 {
+		log.Printf("failed to parse limit param: %v", err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit parameter"})
 		return
 	}
 
-	messages, err := h.messageService.GetMessages(req.ChatID, limit, userID)
+	if limit > 100 {
+		limit = 100
+	}
+
+	messages, err := h.messageService.GetMessages(uint(chatID), limit, userID)
 
 	if err != nil {
-		log.Printf("failed to get messages for chat %d: %v", req.ChatID, err)
+		log.Printf("failed to get messages for chat %d: %v", chatID, err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve messages"})
 		return
 	}
@@ -77,19 +108,30 @@ func (h *MessageHandler) GetMessages(c *gin.Context) {
 }
 
 func (h *MessageHandler) DeleteMessage(c *gin.Context) {
-	var req service.DeleteMessageRequest
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
-		return
-	}
-
-	err := h.messageService.DeleteMessage(req.MessageID, req.UserID)
+	userID, err := GetUserIdFromContext(c)
 
 	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+		log.Printf("failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get a userID"})
 		return
 	}
 
-	c.JSON(200, gin.H{"message": "Message deleted successfully"})
+	messageIDStr := c.Param("messageId")
+	messageID, err := strconv.ParseUint(messageIDStr, 10, 64)
+
+	if err != nil {
+		log.Printf("failed to parse message id param: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid messageID"})
+		return
+	}
+
+	err = h.messageService.DeleteMessage(uint(messageID), userID)
+
+	if err != nil {
+		log.Printf("failed to delete message: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete message"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Message deleted successfully"})
 }

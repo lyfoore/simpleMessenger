@@ -12,43 +12,45 @@ type ChatHandler struct {
 	chatService *service.ChatService
 }
 
-type CreateChatRequest struct {
-	FirstUserID  uint `json:"first_user_id"`
-	SecondUserID uint `json:"second_user_id"`
-}
-
-type DeleteChatRequest struct {
-	ChatID uint `json:"chat_id"`
-}
-
 func NewChatHandler(chatService *service.ChatService) *ChatHandler {
 	return &ChatHandler{chatService: chatService}
 }
 
 func (h *ChatHandler) CreateChat(c *gin.Context) {
-	var req CreateChatRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	userID, err := GetUserIdFromContext(c)
+
+	if err != nil {
+		log.Printf("failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get a userID"})
 		return
 	}
 
-	err := h.chatService.CreateChat(req.FirstUserID, req.SecondUserID)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+	var req struct {
+		CompanionID uint `json:"companionId"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		log.Printf("failed to parse body: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "failed to unmarshal companion id"})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Chat created successfully"})
+
+	err = h.chatService.CreateChat(userID, req.CompanionID)
+	if err != nil {
+		log.Printf("failed to create chat: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create chat"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Chat created successfully"})
 }
 
 func (h *ChatHandler) GetChats(c *gin.Context) {
-	value, exists := c.Get("user_id")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "user not authenticated"})
-		return
-	}
-	userID, ok := value.(uint)
-	if !ok {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+	userID, err := GetUserIdFromContext(c)
+
+	if err != nil {
+		log.Printf("failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get a userID"})
 		return
 	}
 
@@ -57,6 +59,10 @@ func (h *ChatHandler) GetChats(c *gin.Context) {
 	if err != nil || limit <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid limit parameter"})
 		return
+	}
+
+	if limit > 100 {
+		limit = 100
 	}
 
 	chats, err := h.chatService.GetChats(userID, limit)
@@ -70,10 +76,30 @@ func (h *ChatHandler) GetChats(c *gin.Context) {
 }
 
 func (h *ChatHandler) DeleteChat(c *gin.Context) {
-	var req DeleteChatRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(400, gin.H{"error": err.Error()})
+	userID, err := GetUserIdFromContext(c)
+
+	if err != nil {
+		log.Printf("failed to get userID from context: %v", err)
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "failed to get a userID"})
 		return
 	}
-	c.JSON(200, gin.H{"message": "Chat deleted successfully"})
+
+	chatIDStr := c.Param("chatId")
+	chatID, err := strconv.ParseUint(chatIDStr, 10, 64)
+
+	if err != nil {
+		log.Printf("failed to parse chat id param: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid chatID"})
+		return
+	}
+
+	err = h.chatService.DeleteChat(uint(chatID), userID)
+
+	if err != nil {
+		log.Printf("failed to delete chat %d: %v", chatID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete chat"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Chat deleted successfully"})
 }

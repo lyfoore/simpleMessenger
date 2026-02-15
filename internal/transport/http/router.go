@@ -3,6 +3,7 @@ package http
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"simpleMessenger/internal/service"
 )
 
@@ -34,7 +35,7 @@ func (r *Router) SetupRouter(
 		protected.POST("/chats", chatHandler.CreateChat)
 		protected.DELETE("/chats/:chatId", chatHandler.DeleteChat)
 
-		//protected.GET("/chats/:chatId/messages", messageHandler.GetMessages) // query: limit
+		protected.GET("/chats/:chatId/messages", messageHandler.GetMessages) // query: limit
 
 		protected.POST("/chats/:chatId/messages", messageHandler.SendMessage)
 
@@ -42,7 +43,7 @@ func (r *Router) SetupRouter(
 
 		protected.GET("/me", func(c *gin.Context) {
 			userID := c.MustGet("user_id").(uint)
-			c.JSON(200, gin.H{
+			c.JSON(http.StatusOK, gin.H{
 				"message": "You are signed in",
 				"user_id": userID,
 			})
@@ -50,11 +51,11 @@ func (r *Router) SetupRouter(
 	}
 
 	r.engine.GET("/", func(c *gin.Context) {
-		c.String(200, "Messenger API is running")
+		c.String(http.StatusOK, "Messenger API is running")
 	})
 }
 
 func (r *Router) Run() {
-	r.engine.Run(":8080")
 	fmt.Println("Server is running on port 8080")
+	r.engine.Run(":8080")
 }

@@ -1,13 +1,19 @@
 package http
 
 import (
+	"fmt"
 	"github.com/gin-gonic/gin"
+	"log"
 	"net/http"
 	"simpleMessenger/internal/model"
 	"simpleMessenger/internal/service"
 )
 
 type LoginRequest struct {
+	Username string `json:"username"`
+}
+
+type RegisterRequest struct {
 	Username string `json:"username"`
 }
 
@@ -21,21 +27,24 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 
 // POST /api/auth/register
 func (h *AuthHandler) Register(c *gin.Context) {
-	req := &LoginRequest{}
+	req := &RegisterRequest{}
 	if err := c.ShouldBindJSON(req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("failed to unmarshal register request: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad register request"})
 		return
 	}
 
 	err := h.authService.Register(&model.User{Login: req.Username})
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("failed to register user: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to register user"})
 		return
 	}
 
 	response, err := h.authService.Login(req.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("failed to login: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to login"})
 		return
 	}
 	c.JSON(http.StatusOK, response)
@@ -46,18 +55,21 @@ func (h *AuthHandler) Login(c *gin.Context) {
 	req := &LoginRequest{}
 
 	if err := c.ShouldBindJSON(req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		log.Printf("failed to unmarshal login request: %v", err)
+		c.JSON(http.StatusBadRequest, gin.H{"error": "bad login request"})
 		return
 	}
 
 	if req.Username == "" {
+		log.Printf("failed to unmarshal login request: empty username")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "username is empty"})
 		return
 	}
 
 	response, err := h.authService.Login(req.Username)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		log.Printf("failed to login: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "unable to login"})
 		return
 	}
 	c.JSON(http.StatusOK, response)
@@ -67,6 +79,7 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
 		if token == "" {
+			log.Printf("no token provided")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is empty"})
 			c.Abort()
 			return
@@ -78,6 +91,7 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 
 		userID, err := tokenService.VerifyToken(token)
 		if err != nil {
+			log.Printf("failed to verify token: %v", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			c.Abort()
 			return
@@ -86,4 +100,20 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 		c.Set("user_id", userID)
 		c.Next()
 	}
+}
+
+func GetUserIdFromContext(c *gin.Context) (uint, error) {
+	value, exists := c.Get("user_id")
+
+	if !exists {
+		return 0, fmt.Errorf("user is not authenticated")
+	}
+
+	userID, ok := value.(uint)
+
+	if !ok {
+		return 0, fmt.Errorf("invalid user id type")
+	}
+
+	return userID, nil
 }
