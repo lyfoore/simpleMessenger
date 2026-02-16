@@ -64,7 +64,7 @@ func (h *Hub) SendToChat(chatID, senderID uint, message []byte) error {
 
 	for _, userID := range participants {
 		if userID == senderID {
-			continue
+			//continue
 		}
 		h.SendToUser(userID, message)
 	}

@@ -63,12 +63,19 @@ func (c *Client) handleMessage(data []byte) {
 		ChatID: message.ChatID,
 	}
 
-	if err := c.hub.messageService.SendMessage(req); err != nil {
+	msgResp, err := c.hub.messageService.SendMessage(req)
+	if err != nil {
 		log.Printf("send message error: %v", err)
 		return
 	}
 
-	if err := c.hub.SendToChat(message.ChatID, message.UserID, data); err != nil {
+	msgBytes, err := json.Marshal(msgResp)
+	if err != nil {
+		log.Printf("failed to marshal message: %v", err)
+		return
+	}
+
+	if err := c.hub.SendToChat(message.ChatID, message.UserID, msgBytes); err != nil {
 		log.Printf("failed to send to chat: %v", err)
 	}
 }

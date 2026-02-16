@@ -34,22 +34,22 @@ type DeleteMessageRequest struct {
 	MessageID uint `json:"message_id"`
 }
 
-func (s *MessageService) SendMessage(req *SendMessageRequest) error {
+func (s *MessageService) SendMessage(req *SendMessageRequest) (*model.Message, error) {
 	if req == nil {
-		return errors.New("nil request")
+		return nil, errors.New("nil request")
 	}
 
 	if strings.TrimSpace(req.Text) == "" {
-		return errors.New("message text cannot be empty")
+		return nil, errors.New("message text cannot be empty")
 	}
 
 	isUserInChat, err := s.chatParticipantsRepo.IsUserInChat(req.UserID, req.ChatID)
 	if err != nil {
-		return fmt.Errorf("cant check if user is in chat: %w", err)
+		return nil, fmt.Errorf("cant check if user is in chat: %w", err)
 	}
 
 	if !isUserInChat {
-		return fmt.Errorf("cant send message. user is not in chat")
+		return nil, fmt.Errorf("cant send message. user is not in chat")
 	}
 
 	msg := &model.Message{
@@ -60,14 +60,14 @@ func (s *MessageService) SendMessage(req *SendMessageRequest) error {
 
 	err = s.messageRepo.Create(msg)
 	if err != nil {
-		return fmt.Errorf("cant send message: %w", err)
+		return nil, fmt.Errorf("cant send message: %w", err)
 	}
 
 	chat, err := s.chatRepo.GetByID(req.ChatID)
 
 	if err != nil {
 		_ = s.messageRepo.Delete(msg.ID)
-		return fmt.Errorf("cant get chat for updating: %w", err)
+		return nil, fmt.Errorf("cant get chat for updating: %w", err)
 	}
 
 	chat.LastMessageAt = time.Now()
@@ -76,10 +76,10 @@ func (s *MessageService) SendMessage(req *SendMessageRequest) error {
 
 	if err != nil {
 		_ = s.messageRepo.Delete(msg.ID)
-		return fmt.Errorf("cant update last_message_at in chat: %w", err)
+		return nil, fmt.Errorf("cant update last_message_at in chat: %w", err)
 	}
 
-	return nil
+	return msg, nil
 }
 
 func (s *MessageService) GetMessages(chatID uint, limit int, userID uint) ([]*model.Message, error) {

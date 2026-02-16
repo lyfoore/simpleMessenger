@@ -55,7 +55,7 @@ func (h *MessageHandler) SendMessage(c *gin.Context) {
 		ChatID: uint(chatID),
 	}
 
-	err = h.messageService.SendMessage(sendMessageRequest)
+	_, err = h.messageService.SendMessage(sendMessageRequest)
 
 	if err != nil {
 		log.Printf("failed to send message: %v", err)

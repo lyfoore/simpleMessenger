@@ -79,6 +79,10 @@ func (h *AuthHandler) Login(c *gin.Context) {
 func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.GetHeader("Authorization")
+
+		if token == "" {
+			token = c.Query("token")
+		}
 		if token == "" {
 			log.Printf("no token provided")
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "token is empty"})
@@ -99,7 +103,6 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 		}
 
 		c.Set("user_id", userID)
-
 		ctx := context.WithValue(c.Request.Context(), "user_id", userID)
 		c.Request = c.Request.WithContext(ctx)
 
