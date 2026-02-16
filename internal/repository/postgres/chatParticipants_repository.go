@@ -36,6 +36,17 @@ func (c *chatParticipantsRepository) GetByID(id uint) (*model.ChatParticipants, 
 	return chatParticipants, nil
 }
 
+func (c *chatParticipantsRepository) GetChatParticipantsByChatID(chatId uint) ([]uint, error) {
+	var chatParticipants []uint
+	result := c.db.Model(&model.ChatParticipants{}).Select("user_id").Where("chat_id = ?", chatId).Find(&chatParticipants)
+
+	if result.Error != nil {
+		return nil, fmt.Errorf("get chat participants by chat id: %v", result.Error)
+	}
+
+	return chatParticipants, nil
+}
+
 func (c *chatParticipantsRepository) IsChatExists(firstUserID, secondUserID uint) (bool, error) {
 	var chatID uint
 	err := c.db.Model(&model.ChatParticipants{}).Select("chat_id").Where("user_id IN (?, ?)", firstUserID, secondUserID).Group("chat_id").Having("COUNT(DISTINCT user_id) = ?", 2).Having("COUNT(*) = ?", 2).Having("(SELECT COUNT(*) FROM chat_participants WHERE chat_id = chat_participants.chat_id) = ?", 2).Take(&chatID).Error

@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"simpleMessenger/internal/model"
 	repoInterfaces "simpleMessenger/internal/repository/interfaces"
 	"time"
@@ -68,6 +69,17 @@ func (s *ChatService) GetChats(userID uint, limit int) ([]*model.Chat, error) {
 		return nil, fmt.Errorf("cant get chats by userID: %w", err)
 	}
 	return chats, nil
+}
+
+func (s *ChatService) GetUsersInChat(chatId uint) ([]uint, error) {
+	userIDs, err := s.chatParticipantsRepo.GetChatParticipantsByChatID(chatId)
+
+	if err != nil {
+		log.Printf("cant get users by chat id: %v", chatId)
+		return nil, fmt.Errorf("cant get users by chat id: %w", err)
+	}
+
+	return userIDs, nil
 }
 
 func (s *ChatService) DeleteChat(chatID, userID uint) error {
