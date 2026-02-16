@@ -2,10 +2,12 @@ package http
 
 import (
 	"fmt"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"simpleMessenger/internal/service"
 	"simpleMessenger/internal/transport/websocket"
+	"time"
 )
 
 type Router struct {
@@ -14,6 +16,16 @@ type Router struct {
 
 func NewRouter() *Router {
 	engine := gin.Default()
+
+	engine.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+
 	return &Router{engine: engine}
 }
 
