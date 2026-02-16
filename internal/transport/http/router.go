@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"simpleMessenger/internal/service"
+	"simpleMessenger/internal/transport/websocket"
 )
 
 type Router struct {
@@ -21,6 +22,7 @@ func (r *Router) SetupRouter(
 	chatHandler *ChatHandler,
 	messageHandler *MessageHandler,
 	tokenService service.TokenService,
+	wsHub *websocket.Hub,
 ) {
 	public := r.engine.Group("/api")
 	{
@@ -40,6 +42,10 @@ func (r *Router) SetupRouter(
 		protected.POST("/chats/:chatId/messages", messageHandler.SendMessage)
 
 		protected.DELETE("/messages/:messageId", messageHandler.DeleteMessage)
+
+		protected.GET("/ws", func(c *gin.Context) {
+			websocket.ServeWs(wsHub, c.Writer, c.Request)
+		})
 
 		protected.GET("/me", func(c *gin.Context) {
 			userID := c.MustGet("user_id").(uint)

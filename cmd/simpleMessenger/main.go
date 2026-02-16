@@ -7,6 +7,7 @@ import (
 	"simpleMessenger/internal/repository/postgres"
 	"simpleMessenger/internal/service"
 	"simpleMessenger/internal/transport/http"
+	"simpleMessenger/internal/transport/websocket"
 )
 
 func main() {
@@ -30,8 +31,11 @@ func main() {
 	chatHandler := http.NewChatHandler(chatService)
 	messageHandler := http.NewMessageHandler(messageService)
 
+	wsHub := websocket.NewHub(messageService, chatService)
+	go wsHub.Run()
+
 	r := http.NewRouter()
-	r.SetupRouter(authHandler, chatHandler, messageHandler, tokenService)
+	r.SetupRouter(authHandler, chatHandler, messageHandler, tokenService, wsHub)
 	r.Run()
 }
 

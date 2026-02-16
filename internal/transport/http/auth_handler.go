@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"log"
@@ -98,6 +99,10 @@ func AuthMiddleware(tokenService service.TokenService) gin.HandlerFunc {
 		}
 
 		c.Set("user_id", userID)
+
+		ctx := context.WithValue(c.Request.Context(), "user_id", userID)
+		c.Request = c.Request.WithContext(ctx)
+
 		c.Next()
 	}
 }
