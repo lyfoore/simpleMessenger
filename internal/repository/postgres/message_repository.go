@@ -39,17 +39,28 @@ func (r *messageRepository) GetByID(id uint) (*model.Message, error) {
 func (r *messageRepository) GetMessagesByChatID(chatID uint, limit int) ([]*model.Message, error) {
 	var messages []*model.Message
 
-	query := r.db.Model(&model.Message{}).
-		Where("chat_id = ?", chatID).
-		Order("created_at DESC")
+	dbQuery := r.db.Model(&model.Message{}).Where("chat_id = ?", chatID)
 
 	if limit > 0 {
-		query = query.Limit(limit)
-	}
+		subQuery := dbQuery.
+			Order("created_at DESC").
+			Limit(limit).
+			Select("id")
 
-	err := query.Find(&messages).Error
-	if err != nil {
-		return nil, fmt.Errorf("get messages in chat: %w", err)
+		err := r.db.Model(&model.Message{}).
+			Where("id IN (?)", subQuery).
+			Order("created_at ASC").
+			Find(&messages).Error
+		if err != nil {
+			return nil, fmt.Errorf("get last messages in chat: %w", err)
+		}
+	} else {
+		err := dbQuery.
+			Order("created_at ASC").
+			Find(&messages).Error
+		if err != nil {
+			return nil, fmt.Errorf("get all messages in chat: %w", err)
+		}
 	}
 
 	return messages, nil
