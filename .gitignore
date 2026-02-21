@@ -32,3 +32,4 @@ go.work
 *.yaml~
 Dockerfile~
 postgres_data
+.vscode
