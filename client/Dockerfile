@@ -1,29 +1,31 @@
-# Stage 1: build
-FROM node:18-alpine AS builder
+# Multi-stage build for React app
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Копируем package.json и package-lock.json (если есть)
+# Copy package files
 COPY package*.json ./
 
-# Устанавливаем зависимости (используем npm install, так как lock-файл может отсутствовать)
+# Install dependencies
 RUN npm install
 
-# Копируем исходный код и собираем приложение
+# Copy source code
 COPY . .
+
+# Build the app
 RUN npm run build
 
-# Stage 2: serve with nginx
+# Production stage with nginx
 FROM nginx:alpine
 
-# Копируем собранные файлы
-COPY --from=builder /app/build /usr/share/nginx/html
+# Copy custom nginx config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Копируем скрипт для подстановки переменных окружения
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+# Copy built files from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
 
+# Expose port 80
 EXPOSE 80
 
-# ENTRYPOINT ["/entrypoint.sh"]
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
