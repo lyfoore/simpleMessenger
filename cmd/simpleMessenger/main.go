@@ -24,10 +24,12 @@ func main() {
 
 	tokenService := service.NewJwtService(secret)
 	authService := service.NewAuthService(userRepo, tokenService)
+	userService := service.NewUserService(userRepo)
 	chatService := service.NewChatService(chatRepo, chatParticipantsRepo, messageRepo)
 	messageService := service.NewMessageService(messageRepo, chatRepo, chatParticipantsRepo)
 
 	authHandler := http.NewAuthHandler(authService)
+	userHandler := http.NewUserHandler(userService)
 	chatHandler := http.NewChatHandler(chatService)
 	messageHandler := http.NewMessageHandler(messageService)
 
@@ -35,7 +37,7 @@ func main() {
 	go wsHub.Run()
 
 	r := http.NewRouter()
-	r.SetupRouter(authHandler, chatHandler, messageHandler, tokenService, wsHub)
+	r.SetupRouter(authHandler, userHandler, chatHandler, messageHandler, tokenService, wsHub)
 	r.Run()
 }
 

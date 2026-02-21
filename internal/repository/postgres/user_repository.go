@@ -48,6 +48,21 @@ func (r *userRepository) GetByLogin(login string) (*model.User, error) {
 	return user, nil
 }
 
+func (r *userRepository) SearchByLogin(login string, limit int) ([]*model.User, error) {
+	users := make([]*model.User, 0)
+
+	err := r.db.Where("login LIKE ?", fmt.Sprintf("%s%%", login)).Limit(limit).Find(&users).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, repoInterfaces.ErrUserNotFound
+		}
+		return nil, fmt.Errorf("search users by login %w", err)
+	}
+
+	return users, nil
+}
+
 func (r *userRepository) Update(user *model.User) error {
 	result := r.db.Model(&model.User{}).Updates(user)
 	if result.Error != nil {

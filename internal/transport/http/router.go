@@ -31,6 +31,7 @@ func NewRouter() *Router {
 
 func (r *Router) SetupRouter(
 	authHandler *AuthHandler,
+	userHandler *UserHandler,
 	chatHandler *ChatHandler,
 	messageHandler *MessageHandler,
 	tokenService service.TokenService,
@@ -45,6 +46,8 @@ func (r *Router) SetupRouter(
 	protected := r.engine.Group("/api")
 	protected.Use(AuthMiddleware(tokenService))
 	{
+		protected.GET("/users", userHandler.GetUsers) // query: id, login, search, limit
+
 		protected.GET("/chats", chatHandler.GetChats) // query: limit
 		protected.POST("/chats", chatHandler.CreateChat)
 		protected.DELETE("/chats/:chatId", chatHandler.DeleteChat)
