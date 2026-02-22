@@ -12,10 +12,11 @@ type ChatService struct {
 	chatRepo             repoInterfaces.ChatRepo
 	chatParticipantsRepo repoInterfaces.ChatParticipantsRepo
 	messageRepo          repoInterfaces.MessageRepo
+	userRepo             repoInterfaces.UserRepo
 }
 
-func NewChatService(chatRepo repoInterfaces.ChatRepo, chatParticipantsRepo repoInterfaces.ChatParticipantsRepo, messageRepo repoInterfaces.MessageRepo) *ChatService {
-	return &ChatService{chatRepo, chatParticipantsRepo, messageRepo}
+func NewChatService(chatRepo repoInterfaces.ChatRepo, chatParticipantsRepo repoInterfaces.ChatParticipantsRepo, messageRepo repoInterfaces.MessageRepo, userRepo repoInterfaces.UserRepo) *ChatService {
+	return &ChatService{chatRepo, chatParticipantsRepo, messageRepo, userRepo}
 }
 
 func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
@@ -28,8 +29,21 @@ func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
 		return fmt.Errorf("chat is already created")
 	}
 
+	firstUser, err := s.userRepo.GetByID(firstUserID)
+	if err != nil {
+		return fmt.Errorf("cant get first user by id: %w", err)
+	}
+
+	secondUser, err := s.userRepo.GetByID(secondUserID)
+	if err != nil {
+		return fmt.Errorf("cant get second user by id: %w", err)
+	}
+
+	chatName := formatChatName(firstUser.Login, secondUser.Login)
+
 	chat := &model.Chat{
 		LastMessageAt: time.Now(),
+		Name:          chatName,
 	}
 
 	err = s.chatRepo.Create(chat)
@@ -61,6 +75,13 @@ func (s *ChatService) CreateChat(firstUserID, secondUserID uint) error {
 	}
 
 	return nil
+}
+
+func formatChatName(login1, login2 string) string {
+	if login1 < login2 {
+		return login1 + " • " + login2
+	}
+	return login2 + " • " + login1
 }
 
 func (s *ChatService) GetChats(userID uint, limit int) ([]*model.Chat, error) {

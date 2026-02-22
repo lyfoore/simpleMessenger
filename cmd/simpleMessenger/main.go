@@ -25,7 +25,7 @@ func main() {
 	tokenService := service.NewJwtService(secret)
 	authService := service.NewAuthService(userRepo, tokenService)
 	userService := service.NewUserService(userRepo)
-	chatService := service.NewChatService(chatRepo, chatParticipantsRepo, messageRepo)
+	chatService := service.NewChatService(chatRepo, chatParticipantsRepo, messageRepo, userRepo)
 	messageService := service.NewMessageService(messageRepo, chatRepo, chatParticipantsRepo)
 
 	authHandler := http.NewAuthHandler(authService)
